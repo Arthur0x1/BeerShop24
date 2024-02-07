@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Beershop24.Domains\Beershop24.Domains.csproj" />
+    <ProjectReference Include="..\Beershop24.Repositories\Beershop24.Repositories.csproj" />
+  </ItemGroup>
+
+</Project>
