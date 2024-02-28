@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Data;
 using Beershop24.Extensions;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Beershop24.Controllers
 {
@@ -26,7 +27,7 @@ namespace Beershop24.Controllers
 			breweryService = new BreweryService();
 		}
 
-
+		[Authorize(Roles = "Customer")]
 		public async Task<IActionResult> Index()  // add using System.Threading.Tasks;
 		{
 			var list = await beerService.GetAllAsync();
@@ -46,10 +47,10 @@ namespace Beershop24.Controllers
 			{
 				Breweries = new SelectList(
 					await breweryService.GetAllAsync(),
-					nameof(Brewery.Brouwernr), nameof(Brewery.Naam),
+					nameof(Brewery.Brouwernr), nameof(Brewery.Naam)),
 				Varieties = new SelectList(
 					await varietyService.GetAllAsync(),
-					nameof(Variety.Soortnr), nameof(Variety.Soortnaam)
+					nameof(Variety.Soortnr), nameof(Variety.Soortnaam))
 			};
 
 			return View(beerCreate);
@@ -97,13 +98,13 @@ namespace Beershop24.Controllers
 			return View(entityVM);
 		}
 
-		private async Task<IEnumerable<Brewery>> BreweriesAsSelectList(object selectedItem = null)
+		private async Task<SelectList> BreweriesAsSelectList(object selectedItem = null)
 		{
 			return new SelectList(
 				await breweryService.GetAllAsync(),
 				nameof(Brewery.Brouwernr), nameof(Brewery.Naam),
-				entityVM.Brouwernr
-			)
+				selectedItem
+			);
 		}
 
 		//  GET: Beer/Edit/5
@@ -164,7 +165,7 @@ namespace Beershop24.Controllers
 			);
 			entityVM.Varieties = new SelectList(
 				await varietyService.GetAllAsync(),
-				nameof(Variety.Soortnr, nameof(Variety.Soortnaam),
+				nameof(Variety.Soortnr), nameof(Variety.Soortnaam),
 				entityVM.Soortnr
 			);
 
