@@ -1,175 +1,186 @@
-﻿using System;
-using System.Collections.Generic;
-using Beershop24.Domains.Entities;
+﻿using Beershop24.Domains.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace Beershop24.Domains.Data;
 
 public partial class BeerDbContext : DbContext
 {
-    public BeerDbContext()
-    {
-    }
+	public BeerDbContext()
+	{
+	}
 
-    public BeerDbContext(DbContextOptions<BeerDbContext> options)
-        : base(options)
-    {
-    }
+	public BeerDbContext(DbContextOptions<BeerDbContext> options)
+		: base(options)
+	{
+	}
 
-    public virtual DbSet<AspNetRole> AspNetRoles { get; set; }
+	public virtual DbSet<AspNetRole> AspNetRoles { get; set; }
 
-    public virtual DbSet<AspNetRoleClaim> AspNetRoleClaims { get; set; }
+	public virtual DbSet<AspNetRoleClaim> AspNetRoleClaims { get; set; }
 
-    public virtual DbSet<AspNetUser> AspNetUsers { get; set; }
+	public virtual DbSet<AspNetUser> AspNetUsers { get; set; }
 
-    public virtual DbSet<AspNetUserClaim> AspNetUserClaims { get; set; }
+	public virtual DbSet<AspNetUserClaim> AspNetUserClaims { get; set; }
 
-    public virtual DbSet<AspNetUserLogin> AspNetUserLogins { get; set; }
+	public virtual DbSet<AspNetUserLogin> AspNetUserLogins { get; set; }
 
-    public virtual DbSet<AspNetUserToken> AspNetUserTokens { get; set; }
+	public virtual DbSet<AspNetUserToken> AspNetUserTokens { get; set; }
 
-    public virtual DbSet<Beer> Beers { get; set; }
+	public virtual DbSet<Beer> Beers { get; set; }
 
-    public virtual DbSet<Brewery> Breweries { get; set; }
+	public virtual DbSet<Brewery> Breweries { get; set; }
 
-    public virtual DbSet<Variety> Varieties { get; set; }
+	public virtual DbSet<Variety> Varieties { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=.\\SQL19_VIVES; Database=BierSQL;Trusted_Connection=True;TrustServerCertificate=True;");
+	protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+	{
+		if (!optionsBuilder.IsConfigured)
+		{
+			// install this packages:
+			// - Microsoft.Extensions.Configuration.Json
+			IConfigurationRoot configuration = new ConfigurationBuilder()
+					  .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+					  .AddJsonFile("appsettings.json")
+					  .Build();
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        modelBuilder.UseCollation("Latin1_General_CI_AS");
+			// add connectionstring to appsettings.json file (see appsettings.json)
+			optionsBuilder.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
+		}
+	}
 
-        modelBuilder.Entity<AspNetRole>(entity =>
-        {
-            entity.HasIndex(e => e.NormalizedName, "RoleNameIndex")
-                .IsUnique()
-                .HasFilter("([NormalizedName] IS NOT NULL)");
+	protected override void OnModelCreating(ModelBuilder modelBuilder)
+	{
+		modelBuilder.UseCollation("Latin1_General_CI_AS");
 
-            entity.Property(e => e.Name).HasMaxLength(256);
-            entity.Property(e => e.NormalizedName).HasMaxLength(256);
-        });
+		modelBuilder.Entity<AspNetRole>(entity =>
+		{
+			entity.HasIndex(e => e.NormalizedName, "RoleNameIndex")
+				.IsUnique()
+				.HasFilter("([NormalizedName] IS NOT NULL)");
 
-        modelBuilder.Entity<AspNetRoleClaim>(entity =>
-        {
-            entity.HasIndex(e => e.RoleId, "IX_AspNetRoleClaims_RoleId");
+			entity.Property(e => e.Name).HasMaxLength(256);
+			entity.Property(e => e.NormalizedName).HasMaxLength(256);
+		});
 
-            entity.HasOne(d => d.Role).WithMany(p => p.AspNetRoleClaims).HasForeignKey(d => d.RoleId);
-        });
+		modelBuilder.Entity<AspNetRoleClaim>(entity =>
+		{
+			entity.HasIndex(e => e.RoleId, "IX_AspNetRoleClaims_RoleId");
 
-        modelBuilder.Entity<AspNetUser>(entity =>
-        {
-            entity.HasIndex(e => e.NormalizedEmail, "EmailIndex");
+			entity.HasOne(d => d.Role).WithMany(p => p.AspNetRoleClaims).HasForeignKey(d => d.RoleId);
+		});
 
-            entity.HasIndex(e => e.NormalizedUserName, "UserNameIndex")
-                .IsUnique()
-                .HasFilter("([NormalizedUserName] IS NOT NULL)");
+		modelBuilder.Entity<AspNetUser>(entity =>
+		{
+			entity.HasIndex(e => e.NormalizedEmail, "EmailIndex");
 
-            entity.Property(e => e.Email).HasMaxLength(256);
-            entity.Property(e => e.NormalizedEmail).HasMaxLength(256);
-            entity.Property(e => e.NormalizedUserName).HasMaxLength(256);
-            entity.Property(e => e.UserName).HasMaxLength(256);
+			entity.HasIndex(e => e.NormalizedUserName, "UserNameIndex")
+				.IsUnique()
+				.HasFilter("([NormalizedUserName] IS NOT NULL)");
 
-            entity.HasMany(d => d.Roles).WithMany(p => p.Users)
-                .UsingEntity<Dictionary<string, object>>(
-                    "AspNetUserRole",
-                    r => r.HasOne<AspNetRole>().WithMany().HasForeignKey("RoleId"),
-                    l => l.HasOne<AspNetUser>().WithMany().HasForeignKey("UserId"),
-                    j =>
-                    {
-                        j.HasKey("UserId", "RoleId");
-                        j.ToTable("AspNetUserRoles");
-                        j.HasIndex(new[] { "RoleId" }, "IX_AspNetUserRoles_RoleId");
-                    });
-        });
+			entity.Property(e => e.Email).HasMaxLength(256);
+			entity.Property(e => e.NormalizedEmail).HasMaxLength(256);
+			entity.Property(e => e.NormalizedUserName).HasMaxLength(256);
+			entity.Property(e => e.UserName).HasMaxLength(256);
 
-        modelBuilder.Entity<AspNetUserClaim>(entity =>
-        {
-            entity.HasIndex(e => e.UserId, "IX_AspNetUserClaims_UserId");
+			entity.HasMany(d => d.Roles).WithMany(p => p.Users)
+				.UsingEntity<Dictionary<string, object>>(
+					"AspNetUserRole",
+					r => r.HasOne<AspNetRole>().WithMany().HasForeignKey("RoleId"),
+					l => l.HasOne<AspNetUser>().WithMany().HasForeignKey("UserId"),
+					j =>
+					{
+						j.HasKey("UserId", "RoleId");
+						j.ToTable("AspNetUserRoles");
+						j.HasIndex(new[] { "RoleId" }, "IX_AspNetUserRoles_RoleId");
+					});
+		});
 
-            entity.HasOne(d => d.User).WithMany(p => p.AspNetUserClaims).HasForeignKey(d => d.UserId);
-        });
+		modelBuilder.Entity<AspNetUserClaim>(entity =>
+		{
+			entity.HasIndex(e => e.UserId, "IX_AspNetUserClaims_UserId");
 
-        modelBuilder.Entity<AspNetUserLogin>(entity =>
-        {
-            entity.HasKey(e => new { e.LoginProvider, e.ProviderKey });
+			entity.HasOne(d => d.User).WithMany(p => p.AspNetUserClaims).HasForeignKey(d => d.UserId);
+		});
 
-            entity.HasIndex(e => e.UserId, "IX_AspNetUserLogins_UserId");
+		modelBuilder.Entity<AspNetUserLogin>(entity =>
+		{
+			entity.HasKey(e => new { e.LoginProvider, e.ProviderKey });
 
-            entity.Property(e => e.LoginProvider).HasMaxLength(128);
-            entity.Property(e => e.ProviderKey).HasMaxLength(128);
+			entity.HasIndex(e => e.UserId, "IX_AspNetUserLogins_UserId");
 
-            entity.HasOne(d => d.User).WithMany(p => p.AspNetUserLogins).HasForeignKey(d => d.UserId);
-        });
+			entity.Property(e => e.LoginProvider).HasMaxLength(128);
+			entity.Property(e => e.ProviderKey).HasMaxLength(128);
 
-        modelBuilder.Entity<AspNetUserToken>(entity =>
-        {
-            entity.HasKey(e => new { e.UserId, e.LoginProvider, e.Name });
+			entity.HasOne(d => d.User).WithMany(p => p.AspNetUserLogins).HasForeignKey(d => d.UserId);
+		});
 
-            entity.Property(e => e.LoginProvider).HasMaxLength(128);
-            entity.Property(e => e.Name).HasMaxLength(128);
+		modelBuilder.Entity<AspNetUserToken>(entity =>
+		{
+			entity.HasKey(e => new { e.UserId, e.LoginProvider, e.Name });
 
-            entity.HasOne(d => d.User).WithMany(p => p.AspNetUserTokens).HasForeignKey(d => d.UserId);
-        });
+			entity.Property(e => e.LoginProvider).HasMaxLength(128);
+			entity.Property(e => e.Name).HasMaxLength(128);
 
-        modelBuilder.Entity<Beer>(entity =>
-        {
-            entity.HasKey(e => e.Biernr).HasName("PK_Bieren");
+			entity.HasOne(d => d.User).WithMany(p => p.AspNetUserTokens).HasForeignKey(d => d.UserId);
+		});
 
-            entity.Property(e => e.Alcohol).HasColumnType("decimal(3, 2)");
-            entity.Property(e => e.Image)
-                .HasMaxLength(50)
-                .IsFixedLength();
-            entity.Property(e => e.Naam)
-                .HasMaxLength(50)
-                .IsFixedLength();
+		modelBuilder.Entity<Beer>(entity =>
+		{
+			entity.HasKey(e => e.Biernr).HasName("PK_Bieren");
 
-            entity.HasOne(d => d.BrouwernrNavigation).WithMany(p => p.Beers)
-                .HasForeignKey(d => d.Brouwernr)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Bieren_Brouwerij");
+			entity.Property(e => e.Alcohol).HasColumnType("decimal(3, 2)");
+			entity.Property(e => e.Image)
+				.HasMaxLength(50)
+				.IsFixedLength();
+			entity.Property(e => e.Naam)
+				.HasMaxLength(50)
+				.IsFixedLength();
 
-            entity.HasOne(d => d.SoortnrNavigation).WithMany(p => p.Beers)
-                .HasForeignKey(d => d.Soortnr)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Bieren_Soorten");
-        });
+			entity.HasOne(d => d.BrouwernrNavigation).WithMany(p => p.Beers)
+				.HasForeignKey(d => d.Brouwernr)
+				.OnDelete(DeleteBehavior.ClientSetNull)
+				.HasConstraintName("FK_Bieren_Brouwerij");
 
-        modelBuilder.Entity<Brewery>(entity =>
-        {
-            entity.HasKey(e => e.Brouwernr).HasName("PK_Brouwerij");
+			entity.HasOne(d => d.SoortnrNavigation).WithMany(p => p.Beers)
+				.HasForeignKey(d => d.Soortnr)
+				.OnDelete(DeleteBehavior.ClientSetNull)
+				.HasConstraintName("FK_Bieren_Soorten");
+		});
 
-            entity.Property(e => e.Brouwernr).ValueGeneratedNever();
-            entity.Property(e => e.Adres)
-                .HasMaxLength(60)
-                .IsFixedLength();
-            entity.Property(e => e.Gemeente)
-                .HasMaxLength(40)
-                .IsFixedLength();
-            entity.Property(e => e.Naam)
-                .HasMaxLength(50)
-                .IsFixedLength();
-            entity.Property(e => e.Omzet).HasColumnType("decimal(12, 2)");
-            entity.Property(e => e.Postcode)
-                .HasMaxLength(10)
-                .IsFixedLength();
-        });
+		modelBuilder.Entity<Brewery>(entity =>
+		{
+			entity.HasKey(e => e.Brouwernr).HasName("PK_Brouwerij");
 
-        modelBuilder.Entity<Variety>(entity =>
-        {
-            entity.HasKey(e => e.Soortnr).HasName("PK_Soorten");
+			entity.Property(e => e.Brouwernr).ValueGeneratedNever();
+			entity.Property(e => e.Adres)
+				.HasMaxLength(60)
+				.IsFixedLength();
+			entity.Property(e => e.Gemeente)
+				.HasMaxLength(40)
+				.IsFixedLength();
+			entity.Property(e => e.Naam)
+				.HasMaxLength(50)
+				.IsFixedLength();
+			entity.Property(e => e.Omzet).HasColumnType("decimal(12, 2)");
+			entity.Property(e => e.Postcode)
+				.HasMaxLength(10)
+				.IsFixedLength();
+		});
 
-            entity.Property(e => e.Soortnr).ValueGeneratedNever();
-            entity.Property(e => e.Soortnaam)
-                .HasMaxLength(30)
-                .IsUnicode(false)
-                .IsFixedLength();
-        });
+		modelBuilder.Entity<Variety>(entity =>
+		{
+			entity.HasKey(e => e.Soortnr).HasName("PK_Soorten");
 
-        OnModelCreatingPartial(modelBuilder);
-    }
+			entity.Property(e => e.Soortnr).ValueGeneratedNever();
+			entity.Property(e => e.Soortnaam)
+				.HasMaxLength(30)
+				.IsUnicode(false)
+				.IsFixedLength();
+		});
 
-    partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
+		OnModelCreatingPartial(modelBuilder);
+	}
+
+	partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }
