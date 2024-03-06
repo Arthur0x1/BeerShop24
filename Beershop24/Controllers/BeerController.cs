@@ -98,7 +98,8 @@ namespace Beershop24.Controllers
 			return View(entityVM);
 		}
 
-		private async Task<SelectList> BreweriesAsSelectList(object selectedItem = null)
+		[NonAction]
+		private async Task<SelectList> BreweriesAsSelectList(object? selectedItem = null)
 		{
 			return new SelectList(
 				await breweryService.GetAllAsync(),
@@ -123,7 +124,7 @@ namespace Beershop24.Controllers
 
 			var beerEdit = _mapper.Map<BeerEditVM>(beer);
 			beerEdit.Breweries = new
-				SelectList(await breweryService.GetAllAsync(), "Brouwernr", "Naam", beer.Brouwernr);
+				SelectList(await breweryService.GetAllAsync(), nameof(Beer.Brouwernr), nameof(Beer.Naam), beer.Brouwernr);
 			beerEdit.Varieties = new
 				SelectList(await varietyService.GetAllAsync(), "Soortnr", "Soortnaam", beer.Soortnr);
 
