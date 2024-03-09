@@ -1,4 +1,8 @@
 using Beershop24.Data;
+using Beershop24.Domains.Data;
+using Beershop24.Domains.Entities;
+using Beershop24.Repositories;
+using Beershop24.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,14 +10,29 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
+builder.Services.AddDbContext<BeerDbContext>(options =>
+    options.UseSqlServer(connectionString));
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
 	.AddRoles<IdentityRole>()
 	.AddEntityFrameworkStores<ApplicationDbContext>();
+
 builder.Services.AddControllersWithViews();
+
+// Dependency injections
+
+builder.Services.AddTransient<IService<Beer>, BeerService>();
+builder.Services.AddTransient<IService<Brewery>, BreweryService>();
+builder.Services.AddTransient<IService<Variety>, VarietyService>();
+
+builder.Services.AddTransient<IDAO<Beer>, BeerDAO>();
+builder.Services.AddTransient<IDAO<Brewery>, BreweryDAO>();
+builder.Services.AddTransient<IDAO<Variety>, VarietyDAO>();
 
 // Add Automapper
 builder.Services.AddAutoMapper(typeof(Program));

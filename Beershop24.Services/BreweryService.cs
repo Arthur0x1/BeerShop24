@@ -10,17 +10,25 @@ using System.Threading.Tasks;
 
 namespace Beershop24.Services
 {
-    public class BreweryService
+    public class BreweryService : IService<Brewery>
     {
-        private BreweryDAO breweryDAO;
-        public BreweryService()
-        {
-            breweryDAO = new BreweryDAO();
-        }
+        private readonly IDAO<Brewery> _breweryDAO;
+
+        public BreweryService(IDAO<Brewery> breweryDAO) => _breweryDAO = breweryDAO;
+
+        public async Task AddAsync(Brewery brewery) => throw new NotImplementedException();
 
         public async Task<IEnumerable<Brewery?>> GetAllAsync()
         {
-            return await breweryDAO.GetAllAsync();
+            return await _breweryDAO.GetAllAsync();
         }
-    }
+
+        public async Task Delete(Brewery brewery) => throw new NotImplementedException();
+
+        public async Task DeleteAsync(Brewery brewery) => throw new NotImplementedException();
+
+        public async Task Update(Brewery brewery) => throw new NotImplementedException();
+
+		public async Task<Brewery?> FindByIdAsync(int id) => throw new NotImplementedException();
+	}
 }

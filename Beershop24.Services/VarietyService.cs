@@ -9,17 +9,25 @@ using System.Threading.Tasks;
 
 namespace Beershop24.Services
 {
-    public class VarietyService
+    public class VarietyService : IService<Variety>
     {
-        private VarietyDAO varietyDAO;
-        public VarietyService()
-        {
-            varietyDAO = new VarietyDAO();
-        }
+        private readonly IDAO<Variety> _varietyDAO;
+
+        public VarietyService(IDAO<Variety> varietyDAO) => _varietyDAO = varietyDAO;
 
         public async Task<IEnumerable<Variety>> GetAllAsync()
         {
-            return await varietyDAO.GetAllAsync();
+            return await _varietyDAO.GetAllAsync();
         }
+
+        public async Task AddAsync(Variety variety) => throw new NotImplementedException();
+
+        public async Task Delete(Variety variety) => throw new NotImplementedException();
+
+        public async Task DeleteAsync(Variety variety) => throw new NotImplementedException();
+
+        public async Task Update(Variety variety) => throw new NotImplementedException();
+
+        public async Task<Variety?> FindByIdAsync(int id) => throw new NotImplementedException();
     }
 }

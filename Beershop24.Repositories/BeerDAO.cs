@@ -11,15 +11,11 @@ using System.Threading.Tasks;
 
 namespace Beershop24.Repositories
 {
-    public class BeerDAO
+    public class BeerDAO : IDAO<Beer>
     {
-
         private readonly BeerDbContext _dbContext;  // Namespace using BierSQL.Domein.Entities; toevoegen bovenaan
 
-        public BeerDAO()
-        {
-            _dbContext = new BeerDbContext();
-        }
+        public BeerDAO(BeerDbContext dbContext) => _dbContext = dbContext; 
 
         public async Task<IEnumerable<Beer>?> GetAllAsync()
         {
@@ -77,6 +73,8 @@ namespace Beershop24.Repositories
 
         }
 
+        public Task Update(Beer beer) => throw new NotImplementedException();
+
         public async Task UpdateAsync(Beer entity)
         {
             _dbContext.Entry(entity).State = EntityState.Modified;
@@ -86,6 +84,20 @@ namespace Beershop24.Repositories
                 await _dbContext.SaveChangesAsync();
             }
 
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                throw;
+            }
+        }
+
+        public async Task Delete(Beer beer)
+        {
+            _dbContext.Entry(beer).State = EntityState.Deleted;
+            try
+            {
+                _dbContext.SaveChanges();
+            }
             catch (Exception ex)
             {
                 Console.WriteLine(ex);
@@ -105,6 +117,11 @@ namespace Beershop24.Repositories
                 Console.WriteLine(ex);
                 throw;
             }
+        }
+
+        public async Task<Beer?> FindByIdAsync(int id)
+        {
+            throw new NotImplementedException();
         }
     }
 }
